@@ -28,3 +28,5 @@ SITECORE_EDGE_URL=http://localhost:8080
 ```
 
 Then build or start the JSS application and browse it as usually.
+
+![image](https://github.com/user-attachments/assets/f5ad94b5-c908-4082-9a67-2021b1f7c4c3)
