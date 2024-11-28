@@ -36,7 +36,7 @@ func startProxyServer() {
 			req.Body.Close() //  must close
 			req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 			reqBodyString := string(bodyBytes)
-			fmt.Printf("[%s]Request body: [%s]\n", reqID, reqBodyString)
+			fmt.Printf("[%s] Request body: [%s]\n", reqID, reqBodyString)
 		case Mode3: // Throttling mode
 			rw.WriteHeader(http.StatusTooManyRequests)
 			fmt.Printf("[%s] 429 Too Many Requests\n", reqID)
@@ -91,14 +91,18 @@ func startProxyServer() {
 		switch mode {
 		case Mode2: // Logging mode
 			contentEncoding := resp.Header.Get("Content-Encoding")
-			respBodyBytes, err := decompressIfNeeded(resp.Body, contentEncoding)
+
+			var buf bytes.Buffer
+			tee := io.TeeReader(resp.Body, &buf)
+
+			respBodyBytes, err := decompressIfNeeded(io.NopCloser(tee), contentEncoding)
 			if err != nil {
 				fmt.Printf("[%s] Failed to decompress response body: %v\n", reqID, err)
 				return
 			}
 
-			resp.Body.Close() //  must close
-			resp.Body = io.NopCloser(bytes.NewBuffer(respBodyBytes))
+			// Restore the original body for further processing
+			resp.Body = io.NopCloser(&buf)
 			respBodyString := string(respBodyBytes)
 
 			fmt.Printf("[%s] Response body: [%s]\n", reqID, respBodyString)
